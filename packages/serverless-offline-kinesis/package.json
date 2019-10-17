@@ -34,16 +34,13 @@
     "lodash": "^4.17.15"
   },
   "devDependencies": {
-    "serverless-offline": "^5.11.0"
+    "jest": "^24.9.0"
   },
   "keywords": [
     "kinesis",
     "serverless",
     "lambda"
   ],
-  "devDependencies": {
-    "jest": "^24.9.0"
-  },
   "scripts": {
     "test": "jest"
   }
