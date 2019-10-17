@@ -9,13 +9,15 @@ const {
   has,
   isEmpty,
   isUndefined,
+  lowerFirst,
   map,
+  mapKeys,
   mapValues,
   omitBy,
   pipe
 } = require('lodash/fp');
 const functionHelper = require('serverless-offline/src/functionHelper');
-const createLambdaContext = require('serverless-offline/src/createLambdaContext');
+const LambdaContext = require('serverless-offline/src/LambdaContext');
 
 const fromCallback = fun =>
   new Promise((resolve, reject) => {
@@ -93,12 +95,14 @@ class ServerlessOfflineSQS {
     const streamName = this.getQueueName(queueEvent);
     this.serverless.cli.log(`${streamName} (λ: ${functionName})`);
 
-    const {location = '.'} = this.getConfig();
+    const config = this.getConfig();
+    const {location = '.'} = config;
 
     const __function = this.service.getFunction(functionName);
 
     const {env} = process;
     const functionEnv = assignAll([
+      {AWS_REGION: get('service.provider.region', this)},
       env,
       get('service.provider.environment', this),
       get('environment', __function)
@@ -114,14 +118,21 @@ class ServerlessOfflineSQS {
       servicePath,
       serviceRuntime
     );
-    const handler = functionHelper.createHandler(funOptions, this.getConfig());
+    const handler = functionHelper.createHandler(funOptions, config);
 
-    const lambdaContext = createLambdaContext(__function, this.service.provider, (err, data) => {
+    const lambdaContext = new LambdaContext(__function, this.service.provider, (err, data) => {
       this.serverless.cli.log(
-        `[${err ? figures.cross : figures.tick}] ${JSON.stringify(data) || ''}`
+        `[${err ? figures.cross : figures.tick}] ${functionName} ${JSON.stringify(data) || ''}`
       );
       cb(err, data);
     });
+
+    const awsRegion = config.region || 'us-west-2';
+    const awsAccountId = config.accountId || '000000000000';
+    const eventSourceARN =
+      typeof queueEvent.arn === 'string'
+        ? queueEvent.arn
+        : `arn:aws:sqs:${awsRegion}:${awsAccountId}:${streamName}`;
 
     const event = {
       Records: messages.map(
@@ -137,11 +148,11 @@ class ServerlessOfflineSQS {
           receiptHandle,
           body,
           attributes,
-          messageAttributes,
+          messageAttributes: mapValues(mapKeys(lowerFirst), messageAttributes),
           md5OfBody,
           eventSource: 'aws:sqs',
-          eventSourceARN: queueEvent.arn,
-          awsRegion: 'us-west-2'
+          eventSourceARN,
+          awsRegion
         })
       )
     };

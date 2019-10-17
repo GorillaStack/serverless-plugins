@@ -44,7 +44,7 @@ const putRecords = () => {
   ]);
 };
 
-const serverless = spawn('sls', ['offline'], {
+const serverless = spawn('serverless', ['--config', 'serverless.kinesis.yml', 'offline'], {
   stdio: ['pipe', 'pipe', 'pipe'],
   cwd: __dirname
 });
@@ -54,7 +54,7 @@ serverless.stdout.pipe(
     write(chunk, enc, cb) {
       const output = chunk.toString();
 
-      if (/Offline listening on/.test(output)) {
+      if (/Offline \[HTTP\] listening on/.test(output)) {
         putRecords();
       }
 

@@ -1,10 +1,12 @@
 {
   "packages": [
-    "packages/*"
+    "packages/*",
+    "tests/*"
   ],
   "version": "independent",
   "command": {
     "bootstrap": {
+      "npmClientArgs": ["--no-package-lock"],
       "hoist": true
     }
   }

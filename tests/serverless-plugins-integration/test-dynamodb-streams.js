@@ -2,45 +2,45 @@
 const {Writable} = require('stream');
 const {spawn} = require('child_process');
 const onExit = require('signal-exit');
-const {SQS} = require('aws-sdk');
+const {DynamoDB} = require('aws-sdk');
 
-const client = new SQS({
+const client = new DynamoDB({
   region: 'eu-west-1',
   accessKeyId: 'local',
   secretAccessKey: 'local',
-  endpoint: 'http://localhost:9324'
+  endpoint: 'http://localhost:8000'
 });
 
-const sendMessages = () => {
+const putItems = () => {
   return Promise.all([
     client
-      .sendMessage({
-        QueueUrl: 'http://localhost:9324/queue/MyFirstQueue',
-        MessageBody: 'MyFirstMessage'
+      .putItem({
+        Item: {id: {S: 'MyFirstId'}},
+        TableName: 'MyFirstTable'
       })
       .promise(),
     client
-      .sendMessage({
-        QueueUrl: 'http://localhost:9324/queue/MySecondQueue',
-        MessageBody: 'MySecondMessage'
+      .putItem({
+        Item: {id: {S: 'MySecondId'}},
+        TableName: 'MySecondTable'
       })
       .promise(),
     client
-      .sendMessage({
-        QueueUrl: 'http://localhost:9324/queue/MyThirdQueue',
-        MessageBody: 'MyThirdMessage'
+      .putItem({
+        Item: {id: {S: 'MyThirdId'}},
+        TableName: 'MyThirdTable'
       })
       .promise(),
     client
-      .sendMessage({
-        QueueUrl: 'http://localhost:9324/queue/MyFourthQueue',
-        MessageBody: 'MyFourthMessage'
+      .putItem({
+        Item: {id: {S: 'MyFourthId'}},
+        TableName: 'MyFourthTable'
       })
       .promise()
   ]);
 };
 
-const serverless = spawn('sls', ['offline'], {
+const serverless = spawn('serverless', ['--config', 'serverless.dynamodb-stream.yml', 'offline'], {
   stdio: ['pipe', 'pipe', 'pipe'],
   cwd: __dirname
 });
@@ -50,8 +50,8 @@ serverless.stdout.pipe(
     write(chunk, enc, cb) {
       const output = chunk.toString();
 
-      if (/Offline listening on/.test(output)) {
-        sendMessages();
+      if (/Offline \[HTTP\] listening on/.test(output)) {
+        putItems();
       }
 
       this.count = (this.count || 0) + (output.match(/\[✔\]/g) || []).length;

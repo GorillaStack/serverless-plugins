@@ -6,21 +6,22 @@ provider:
   runtime: nodejs8.10
 
 plugins:
-  localPath: '../..'
+  localPath: '../../packages'
   modules:
+    - serverless-offline-ssm-provider
     - serverless-offline-dynamodb-streams
     - serverless-offline
 
 functions:
   myPromiseHandler:
-    handler: handler.promise
+    handler: lambda/handler.promise
     events:
       - stream: arn:aws:dynamodb:region:XXXXXX:table/MyFirstTable
       - stream:
           type: dynamodb
           arn: arn:aws:dynamodb:region:XXXXXX:table/MySecondTable
   myCallbackHandler:
-    handler: handler.callback
+    handler: lambda/handler.callback
     events:
       - stream:
           type: dynamodb
@@ -31,7 +32,7 @@ functions:
               - Arn
   myPythonHandler:
     runtime: python2.7
-    handler: handler.handler
+    handler: lambda/handler.handler
     events:
       - stream:
           type: dynamodb
@@ -60,10 +61,5 @@ resources:
 
 custom:
   serverless-offline:
-    port: 3001
-  serverless-offline-dynamodb-streams:
-    endpoint: http://0.0.0.0:8000
-    region: ${self:provider.region}
-    accessKeyId: root
-    secretAccessKey: root
-    skipCacheInvalidation: false
+    port: 3443
+  serverless-offline-dynamodb-streams: ${file(./custom.yml):serverless-offline-dynamodb-streams}

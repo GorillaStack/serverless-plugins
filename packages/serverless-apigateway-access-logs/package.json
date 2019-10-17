@@ -1,6 +1,6 @@
 {
   "name": "serverless-apigateway-access-logs",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Serverless plugin to configure Api Gateway access logs",
   "main": "src",
   "repository": {
@@ -18,7 +18,7 @@
   "license": "MIT",
   "dependencies": {
     "aws-sdk": "^2.444.0",
-    "lodash": "^4.17.11"
+    "lodash": "^4.17.15"
   },
   "keywords": [
     "kinesis",

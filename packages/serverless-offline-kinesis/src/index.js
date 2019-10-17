@@ -19,7 +19,7 @@ const {
   startsWith
 } = require('lodash/fp');
 const functionHelper = require('serverless-offline/src/functionHelper');
-const createLambdaContext = require('serverless-offline/src/createLambdaContext');
+const LambdaContext = require('serverless-offline/src/LambdaContext');
 
 const fromCallback = fun =>
   new Promise((resolve, reject) => {
@@ -103,6 +103,7 @@ class ServerlessOfflineKinesis {
 
     const {env} = process;
     const functionEnv = assignAll([
+      {AWS_REGION: get('service.provider.region', this)},
       env,
       get('service.provider.environment', this),
       get('environment', __function)
@@ -118,9 +119,9 @@ class ServerlessOfflineKinesis {
       serviceRuntime
     );
     const handler = functionHelper.createHandler(funOptions, this.getConfig());
-    const lambdaContext = createLambdaContext(__function, this.service.provider, (err, data) => {
+    const lambdaContext = new LambdaContext(__function, this.service.provider, (err, data) => {
       this.serverless.cli.log(
-        `[${err ? figures.cross : figures.tick}] ${JSON.stringify(data) || ''}`
+        `[${err ? figures.cross : figures.tick}] ${functionName} ${JSON.stringify(data) || ''}`
       );
       cb(err, data);
     });
@@ -139,7 +140,7 @@ class ServerlessOfflineKinesis {
         eventVersion: '1.0',
         eventName: 'aws:kinesis:record',
         eventSourceARN: streamEvent.arn,
-        awsRegion: 'us-west-2'
+        awsRegion: get('service.provider.region', this)
       }))
     };
 
