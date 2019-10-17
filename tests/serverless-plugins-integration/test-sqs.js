@@ -2,45 +2,48 @@
 const {Writable} = require('stream');
 const {spawn} = require('child_process');
 const onExit = require('signal-exit');
-const {DynamoDB} = require('aws-sdk');
+const {SQS} = require('aws-sdk');
 
-const client = new DynamoDB({
+const client = new SQS({
   region: 'eu-west-1',
   accessKeyId: 'local',
   secretAccessKey: 'local',
-  endpoint: 'http://localhost:8000'
+  endpoint: 'http://localhost:9324'
 });
 
-const putItems = () => {
+const sendMessages = () => {
   return Promise.all([
     client
-      .putItem({
-        Item: {id: {S: 'MyFirstId'}},
-        TableName: 'MyFirstTable'
+      .sendMessage({
+        QueueUrl: 'http://localhost:9324/queue/MyFirstQueue',
+        MessageBody: 'MyFirstMessage',
+        MessageAttributes: {
+          myAttribute: {DataType: 'String', StringValue: 'myAttribute'}
+        }
       })
       .promise(),
     client
-      .putItem({
-        Item: {id: {S: 'MySecondId'}},
-        TableName: 'MySecondTable'
+      .sendMessage({
+        QueueUrl: 'http://localhost:9324/queue/MySecondQueue',
+        MessageBody: 'MySecondMessage'
       })
       .promise(),
     client
-      .putItem({
-        Item: {id: {S: 'MyThirdId'}},
-        TableName: 'MyThirdTable'
+      .sendMessage({
+        QueueUrl: 'http://localhost:9324/queue/MyThirdQueue',
+        MessageBody: 'MyThirdMessage'
       })
       .promise(),
     client
-      .putItem({
-        Item: {id: {S: 'MyFourthId'}},
-        TableName: 'MyFourthTable'
+      .sendMessage({
+        QueueUrl: 'http://localhost:9324/queue/MyFourthQueue',
+        MessageBody: 'MyFourthMessage'
       })
       .promise()
   ]);
 };
 
-const serverless = spawn('sls', ['offline'], {
+const serverless = spawn('serverless', ['--config', 'serverless.sqs.yml', 'offline'], {
   stdio: ['pipe', 'pipe', 'pipe'],
   cwd: __dirname
 });
@@ -50,8 +53,8 @@ serverless.stdout.pipe(
     write(chunk, enc, cb) {
       const output = chunk.toString();
 
-      if (/Offline listening on/.test(output)) {
-        putItems();
+      if (/Offline \[HTTP\] listening on/.test(output)) {
+        sendMessages();
       }
 
       this.count = (this.count || 0) + (output.match(/\[✔\]/g) || []).length;
