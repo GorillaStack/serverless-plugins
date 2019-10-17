@@ -47,20 +47,20 @@ const extractStreamNameFromGetAtt = getAtt => {
     throw new Error('Unable to parse Fn::GetAtt for stream cross-reference');
   }
   return logicalResourceName;
-}
+};
 
 const extractStreamNameFromJoin = join => {
   const [delimiter, parts] = join;
   const resolvedParts = parts.map(part => {
     if (typeof part === 'string') {
-      return part
+      return part;
     } else if (typeof part === 'object') {
       return 'placeholder';
     }
   });
   const arn = resolvedParts.join(delimiter);
   return extractStreamNameFromARN(arn);
-}
+};
 
 class ServerlessOfflineKinesis {
   constructor(serverless, options) {
